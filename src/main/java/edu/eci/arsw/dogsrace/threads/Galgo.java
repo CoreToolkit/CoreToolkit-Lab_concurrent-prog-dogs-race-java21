@@ -3,6 +3,7 @@ package edu.eci.arsw.dogsrace.threads;
 import edu.eci.arsw.dogsrace.control.RaceControl;
 import edu.eci.arsw.dogsrace.domain.ArrivalRegistry;
 import edu.eci.arsw.dogsrace.ui.Carril;
+import javax.swing.SwingUtilities;
 
 /**
  * A runner (greyhound) in the race.
@@ -27,13 +28,26 @@ public class Galgo extends Thread {
             control.awaitIfPaused();
 
             Thread.sleep(100);
-            carril.setPasoOn(paso++);
-            carril.displayPasos(paso);
+            control.awaitIfPaused(); // doble verificación para reducir la latencia del Stop
+
+            // usamos step pq se puede demorar swingUtilities en ejecutar la orden que puede
+            // causar que se vuelva
+            // a actualizar el paso antes pintarlo haciendo que pinte incorrectamente.
+            final int step = paso;
+
+            // EDT para volver thread safe la actualización de la UI, ejecuta la orden
+            // cuando pueda "encola la tarea"
+            SwingUtilities.invokeLater(() -> {
+                carril.setPasoOn(step);
+                carril.displayPasos(step + 1);
+            });
+            paso++;
 
             if (paso == carril.size()) {
-                carril.finish();
-                var snapshot = registry.registerArrival(getName());
-                System.out.printf("El galgo %s llego en la posicion %d%n", getName(), snapshot.position());
+                registry.registerArrival(getName());
+                // Misma idea de arriba, edt para evitar sobreescrituras erroneas en la UI
+                SwingUtilities.invokeLater(carril::finish);
+
             }
         }
     }
