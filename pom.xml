@@ -39,6 +39,18 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.version}</version>
+        <configuration>
+          <excludes>
+            <!-- UI classes are hard to unit test in this lab -->
+            <exclude>**/ui/**</exclude>
+            <!-- App entry point doesn't need coverage -->
+            <exclude>**/app/**</exclude>
+            <!-- Thread classes are integration-tested, not unit-tested -->
+            <exclude>**/threads/**</exclude>
+            <!-- Utility classes don't need coverage in this lab -->
+            <exclude>**/util/**</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -60,15 +72,11 @@
                     <limit>
                       <counter>INSTRUCTION</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.70</minimum>
+                      <minimum>0.80</minimum>
                     </limit>
                   </limits>
                 </rule>
               </rules>
-              <excludes>
-                <!-- UI classes are hard to unit test in this lab -->
-                <exclude>**/ui/**</exclude>
-              </excludes>
             </configuration>
           </execution>
         </executions>

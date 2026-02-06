@@ -12,7 +12,8 @@ import java.awt.event.ActionListener;
 /**
  * Entry point (UI + orchestration).
  *
- * NOTE: the start action runs in a separate thread so the Swing UI thread is not blocked.
+ * NOTE: the start action runs in a separate thread so the Swing UI thread is
+ * not blocked.
  */
 public final class MainCanodromo {
 
@@ -48,6 +49,15 @@ public final class MainCanodromo {
                             return;
                         }
                     }
+
+                    // Galgo gal = new Galgo(can.getCarril(16), "16", registry, control);
+                    // gal.start();
+                    // try {
+                    // gal.join();
+                    // } catch (InterruptedException ex) {
+                    // Thread.currentThread().interrupt();
+                    // return;
+                    // }
 
                     // 3) show results ONLY after all threads finished
                     String winner = registry.getWinner();
