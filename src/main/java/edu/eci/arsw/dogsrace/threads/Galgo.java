@@ -29,7 +29,7 @@ public class Galgo extends Thread {
             Thread.sleep(100);
             
             // Doble verificación para evitar latencia.
-            feature/dogsRaceSync
+            control.awaitIfPaused();
             
             carril.setPasoOn(paso++);
             carril.displayPasos(paso);
