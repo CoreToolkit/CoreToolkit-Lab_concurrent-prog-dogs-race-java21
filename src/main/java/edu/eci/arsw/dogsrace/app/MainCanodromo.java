@@ -50,21 +50,12 @@ public final class MainCanodromo {
                         }
                     }
 
-                    // Galgo gal = new Galgo(can.getCarril(16), "16", registry, control);
-                    // gal.start();
-                    // try {
-                    // gal.join();
-                    // } catch (InterruptedException ex) {
-                    // Thread.currentThread().interrupt();
-                    // return;
-                    // }
-
                     // 3) show results ONLY after all threads finished
                     String winner = registry.getWinner();
                     int total = registry.getNextPosition() - 1;
+                    var arrivals = registry.getArrivals();
 
-                    can.winnerDialog(winner, total);
-                    System.out.println("El ganador fue: " + winner);
+                    can.winnerDialog(winner, total, arrivals);
                 }, "race-orchestrator").start();
             }
         });
@@ -73,7 +64,6 @@ public final class MainCanodromo {
             @Override
             public void actionPerformed(ActionEvent e) {
                 control.pause();
-                System.out.println("Carrera pausada!");
             }
         });
 
@@ -81,7 +71,6 @@ public final class MainCanodromo {
             @Override
             public void actionPerformed(ActionEvent e) {
                 control.resume();
-                System.out.println("Carrera reanudada!");
             }
         });
     }

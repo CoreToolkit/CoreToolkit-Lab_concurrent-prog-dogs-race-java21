@@ -29,13 +29,14 @@ public class Galgo extends Thread {
 
             Thread.sleep(100);
             control.awaitIfPaused(); // doble verificación para reducir la latencia del Stop
-            
-            
-            // usamos step pq se puede demorar swingUtilities en ejecutar la orden que puede causar que se vuelva
+
+            // usamos step pq se puede demorar swingUtilities en ejecutar la orden que puede
+            // causar que se vuelva
             // a actualizar el paso antes pintarlo haciendo que pinte incorrectamente.
             final int step = paso;
 
-            // EDT para volver thread safe la actualización de la UI, ejecuta la orden cuando pueda "encola la tarea"
+            // EDT para volver thread safe la actualización de la UI, ejecuta la orden
+            // cuando pueda "encola la tarea"
             SwingUtilities.invokeLater(() -> {
                 carril.setPasoOn(step);
                 carril.displayPasos(step + 1);
@@ -43,11 +44,10 @@ public class Galgo extends Thread {
             paso++;
 
             if (paso == carril.size()) {
-                var snapshot = registry.registerArrival(getName());
-
+                registry.registerArrival(getName());
                 // Misma idea de arriba, edt para evitar sobreescrituras erroneas en la UI
                 SwingUtilities.invokeLater(carril::finish);
-                System.out.printf("El galgo %s llego en la posicion %d%n", getName(), snapshot.position());
+
             }
         }
     }

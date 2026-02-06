@@ -33,13 +33,14 @@ public class Canodromo extends JFrame {
 	private JButton butStart = new JButton("Start");
 	private JButton butStop = new JButton("Stop");
 	private JButton butContinue = new JButton("Continue");
+
 	/**
 	 * Constructor
 	 * 
 	 * @param nCarriles
-	 *            Numero de carriles
+	 *                  Numero de carriles
 	 * @param longPista
-	 *            Longitud de la pista
+	 *                  Longitud de la pista
 	 */
 	public Canodromo(int nCarriles, int longPista) {
 		carril = new Carril[nCarriles];
@@ -118,7 +119,7 @@ public class Canodromo extends JFrame {
 	 * Retorna un carril
 	 * 
 	 * @param i
-	 *            Numero del carril
+	 *          Numero del carril
 	 * @return
 	 */
 	public Carril getCarril(int i) {
@@ -152,11 +153,19 @@ public class Canodromo extends JFrame {
 	 * 
 	 * @param action
 	 */
-	public void setContinueAction(ActionListener action){
+	public void setContinueAction(ActionListener action) {
 		butContinue.addActionListener(action);
 	}
-	
-	public void winnerDialog(String winner,int total) {
-            JOptionPane.showMessageDialog(null, "El ganador fue:" + winner + " de un total de " + total);
-        }	
+
+	public void winnerDialog(String winner, int total, java.util.List<String> arrivals) {
+		StringBuilder message = new StringBuilder();
+		message.append("El ganador fue: Galgo ").append(winner).append("\n\n");
+		message.append("Ranking completo (").append(total).append(" galgos):\n");
+
+		for (int i = 0; i < arrivals.size(); i++) {
+			message.append(i + 1 + ". " + "Galgo " + arrivals.get(i) + "\n");
+		}
+
+		JOptionPane.showMessageDialog(null, message.toString());
+	}
 }
