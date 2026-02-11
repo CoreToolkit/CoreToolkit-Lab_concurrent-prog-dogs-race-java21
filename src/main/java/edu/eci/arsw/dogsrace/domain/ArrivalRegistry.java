@@ -3,45 +3,77 @@ package edu.eci.arsw.dogsrace.domain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import edu.eci.arsw.dogsrace.control.RaceControl;
 
 /**
- * Thread-safe arrival registry.
- * Critical section is limited to the position assignment and winner selection.
+ * Thread-safe arrival registry using AtomicInteger
+ * and supporting early termination (kill).
  */
 public final class ArrivalRegistry {
 
-    private int nextPosition = 1;
-    private String winner = null;
+    // Contador atómico para asignación de posiciones
+    private final AtomicInteger nextPosition = new AtomicInteger(1);
+
+    // Lista protegida manualmente (ArrayList no es thread-safe)
     private final List<String> arrivals = new ArrayList<>();
 
-    public synchronized ArrivalSnapshot registerArrival(String dogName) {
+    // Volatile para visibilidad entre hilos
+    private volatile String winner = null;
+
+    // Referencia al control global de carrera
+    private final RaceControl control;
+
+    public ArrivalRegistry(RaceControl control) {
+        this.control = control;
+    }
+
+    public ArrivalSnapshot registerArrival(String dogName) {
         Objects.requireNonNull(dogName, "dogName");
-        final int position = nextPosition++;
 
-        // Add to arrivals list in order
-        arrivals.add(dogName);
-
-        if (position == 1) {
-            winner = dogName;
+        // 🔥 Si la carrera fue matada, no registrar
+        if (control.isKilled()) {
+            return null;
         }
-        return new ArrivalSnapshot(position, winner);
+
+        // Asignación atómica de posición
+        int position = nextPosition.getAndIncrement();
+
+        synchronized (this) {
+
+            // 🔥 Doble verificación dentro de la región crítica
+            if (control.isKilled()) {
+                return null;
+            }
+
+            arrivals.add(dogName);
+
+            if (position == 1) {
+                winner = dogName;
+            }
+
+            return new ArrivalSnapshot(position, winner);
+        }
     }
 
-    public synchronized int getNextPosition() {
-        return nextPosition;
+    public synchronized List<String> getArrivals() {
+        return List.copyOf(arrivals);
     }
 
-    public synchronized String getWinner() {
+    public int getNextPosition() {
+        return nextPosition.get();
+    }
+
+    public String getWinner() {
         return winner;
     }
 
-    /**
-     * Returns an immutable copy of the arrivals list in order.
-     * 
-     * @return List of dog names in arrival order (1st, 2nd, 3rd, etc.)
-     */
-    public synchronized List<String> getArrivals() {
-        return List.copyOf(arrivals);
+    // 🔥 Necesario para botón Kill o reinicio
+    public synchronized void reset() {
+        nextPosition.set(1);
+        winner = null;
+        arrivals.clear();
     }
 
     public record ArrivalSnapshot(int position, String winner) {
