@@ -24,30 +24,36 @@ public class Galgo extends Thread {
     }
 
     private void corra() throws InterruptedException {
-        while (paso < carril.size()) {
+        while (paso < carril.size() && !control.isKilled()) {
+
             control.awaitIfPaused();
 
             Thread.sleep(100);
-            control.awaitIfPaused(); // doble verificación para reducir la latencia del Stop
 
-            // usamos step pq se puede demorar swingUtilities en ejecutar la orden que puede
-            // causar que se vuelva
-            // a actualizar el paso antes pintarlo haciendo que pinte incorrectamente.
+            if (control.isKilled()) {
+                return;
+            }
+
+            control.awaitIfPaused();
+
             final int step = paso;
 
-            // EDT para volver thread safe la actualización de la UI, ejecuta la orden
-            // cuando pueda "encola la tarea"
             SwingUtilities.invokeLater(() -> {
-                carril.setPasoOn(step);
-                carril.displayPasos(step + 1);
+                if (!control.isKilled()) {
+                    carril.setPasoOn(step);
+                    carril.displayPasos(step + 1);
+                }
             });
+
             paso++;
 
-            if (paso == carril.size()) {
+            if (paso == carril.size() && !control.isKilled()) {
                 registry.registerArrival(getName());
-                // Misma idea de arriba, edt para evitar sobreescrituras erroneas en la UI
-                SwingUtilities.invokeLater(carril::finish);
-
+                SwingUtilities.invokeLater(() -> {
+                    if (!control.isKilled()) {
+                        carril.finish();
+                    }
+                });
             }
         }
     }
@@ -57,7 +63,6 @@ public class Galgo extends Thread {
         try {
             corra();
         } catch (InterruptedException e) {
-            // Restore interruption status and exit
             Thread.currentThread().interrupt();
         }
     }

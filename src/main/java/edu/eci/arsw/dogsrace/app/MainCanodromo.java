@@ -6,22 +6,17 @@ import edu.eci.arsw.dogsrace.threads.Galgo;
 import edu.eci.arsw.dogsrace.ui.Canodromo;
 
 import javax.swing.JButton;
+import javax.swing.SwingUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Entry point (UI + orchestration).
- *
- * NOTE: the start action runs in a separate thread so the Swing UI thread is
- * not blocked.
- */
 public final class MainCanodromo {
 
     private static Galgo[] galgos;
     private static Canodromo can;
 
-    private static final ArrivalRegistry registry = new ArrivalRegistry();
     private static final RaceControl control = new RaceControl();
+    private static ArrivalRegistry registry = new ArrivalRegistry(control);
 
     public static void main(String[] args) {
         can = new Canodromo(17, 100);
@@ -31,16 +26,24 @@ public final class MainCanodromo {
         can.setStartAction(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                ((JButton) e.getSource()).setEnabled(false);
+                JButton startButton = (JButton) e.getSource();
+                startButton.setEnabled(false);
+
+                control.resetKill();
+                registry.reset();
+                can.restart();
 
                 new Thread(() -> {
-                    // 1) create and start all runners
                     for (int i = 0; i < can.getNumCarriles(); i++) {
-                        galgos[i] = new Galgo(can.getCarril(i), String.valueOf(i), registry, control);
+                        galgos[i] = new Galgo(
+                                can.getCarril(i),
+                                String.valueOf(i),
+                                registry,
+                                control
+                        );
                         galgos[i].start();
                     }
 
-                    // 2) wait for all threads (join)
                     for (Galgo g : galgos) {
                         try {
                             g.join();
@@ -50,12 +53,19 @@ public final class MainCanodromo {
                         }
                     }
 
-                    // 3) show results ONLY after all threads finished
-                    String winner = registry.getWinner();
-                    int total = registry.getNextPosition() - 1;
-                    var arrivals = registry.getArrivals();
+                    if (!control.isKilled()) {
+                        String winner = registry.getWinner();
+                        int total = registry.getNextPosition() - 1;
+                        var arrivals = registry.getArrivals();
+                        SwingUtilities.invokeLater(() ->
+                                can.winnerDialog(winner, total, arrivals)
+                        );
+                    }
 
-                    can.winnerDialog(winner, total, arrivals);
+                    SwingUtilities.invokeLater(() ->
+                            startButton.setEnabled(true)
+                    );
+
                 }, "race-orchestrator").start();
             }
         });
@@ -71,6 +81,33 @@ public final class MainCanodromo {
             @Override
             public void actionPerformed(ActionEvent e) {
                 control.resume();
+            }
+        });
+
+        can.setKillAction(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                control.killRace();
+
+                new Thread(() -> {
+                    for (Galgo g : galgos) {
+                        if (g != null && g.isAlive()) {
+                            try {
+                                g.join();
+                            } catch (InterruptedException ex) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+
+                    registry.reset();
+                    control.resetKill();
+
+                    SwingUtilities.invokeLater(() -> {
+                        can.restart();
+                    });
+
+                }).start();
             }
         });
     }

@@ -18,9 +18,9 @@ import javax.swing.border.EmptyBorder;
 
 /**
  * Interfaz de usuario y modelo para un Canodromo
- * 
+ *
  * @author rlopez
- * 
+ *
  */
 public class Canodromo extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -33,10 +33,11 @@ public class Canodromo extends JFrame {
 	private JButton butStart = new JButton("Start");
 	private JButton butStop = new JButton("Stop");
 	private JButton butContinue = new JButton("Continue");
+	private JButton butKill = new JButton("Kill");
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param nCarriles
 	 *                  Numero de carriles
 	 * @param longPista
@@ -83,18 +84,16 @@ public class Canodromo extends JFrame {
 		butPanel.add(butStart);
 		butPanel.add(butStop);
 		butPanel.add(butContinue);
+		butPanel.add(butKill);
 		cont.add(butPanel, BorderLayout.SOUTH);
 
 		this.setSize(butWidht * longPista, butHeight * nCarriles + 400);
 
-		// Get the size of the screen
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		// Determine the new location of the window
 		int w = this.getSize().width;
 		int h = this.getSize().height;
 		int x = (dim.width - w) / 2;
 		int y = (dim.height - h) / 2;
-		// Move the window
 		this.setLocation(x, y);
 		this.setTitle("Canodromo");
 
@@ -115,9 +114,13 @@ public class Canodromo extends JFrame {
 		}
 	}
 
+	public void resetTracks() {
+		restart();
+	}
+
 	/**
 	 * Retorna un carril
-	 * 
+	 *
 	 * @param i
 	 *          Numero del carril
 	 * @return
@@ -132,7 +135,7 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de start
-	 * 
+	 *
 	 * @param action
 	 */
 	public void setStartAction(ActionListener action) {
@@ -141,7 +144,7 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de stop
-	 * 
+	 *
 	 * @param action
 	 */
 	public void setStopAction(ActionListener action) {
@@ -150,11 +153,15 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de continuar
-	 * 
+	 *
 	 * @param action
 	 */
 	public void setContinueAction(ActionListener action) {
 		butContinue.addActionListener(action);
+	}
+
+	public void setKillAction(ActionListener action) {
+		butKill.addActionListener(action);
 	}
 
 	public void winnerDialog(String winner, int total, java.util.List<String> arrivals) {
